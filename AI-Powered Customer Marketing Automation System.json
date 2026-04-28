@@ -1,0 +1,693 @@
+{
+  "name": "AI-Powered Customer Marketing Automation System",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "The workflow loads customer data and campaign decision history from Google Sheets",
+        "height": 112,
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -160
+      ],
+      "id": "156e948f-d393-44a9-84ae-20a03b70db79",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "synchronizes them so that they are sent to the context attachment node at the same time",
+        "height": 112,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -160
+      ],
+      "id": "10be073d-19e8-4a18-ac9f-3eaf0107fefc",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "combines them, and enriches each customer record with historical context.",
+        "height": 112,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -160
+      ],
+      "id": "8619a579-6cd6-4cf8-a81e-035cfad3bfc0",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "It then sends each record to a Mistral-powered AI Agent, \nwhich performs segmentation, churn analysis, strategy generation, and personalized email content creation."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        624,
+        -176
+      ],
+      "id": "75c26a7a-0996-4bb5-af94-dbd370f738ee",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "The system \nstores customer insights, \nlogs campaign decisions",
+        "height": 80,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        928,
+        -176
+      ],
+      "id": "874bccab-ba0d-44a6-bbef-256a3c7621f3",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "and only sends emails to high-priority customers \nusing an IF condition based on priority score.",
+        "height": 128,
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        -192
+      ],
+      "id": "df76136e-06c5-4cc6-b096-1aca7b3d24bb",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        80
+      ],
+      "id": "84b0bf0c-f8e9-4f74-a195-db1420af62a5",
+      "name": "Start Workflow (Manual Trigger)",
+      "notes": "Starts the workflow manually\n\nUsed for testing and demos\nIn real life → replaced with:\nCron (daily run)\nWebhook (real-time trigger)"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84",
+          "mode": "list",
+          "cachedResultName": "FlexFit_Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 635389097,
+          "mode": "list",
+          "cachedResultName": "Customer_Master",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84/edit#gid=635389097"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        240
+      ],
+      "id": "5e98d330-b7da-42b1-9ec3-e4c1a0cf62ea",
+      "name": "Load Customer Data (Customer_Master)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FKGySgzZTVnmknN4",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Reads customer dataset from Google Sheets\n\nProvides:\nCustomer_ID\nTotal_Spend\nPurchase_Frequency\nSubscription_Status\netc."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a marketing automation analyst for FlexFit, a direct-to-consumer fitness brand.\n\nYou will analyze one customer record at a time and produce a marketing decision that follows these 4 business principles:\n\n1. All customers are different\n- Build segmentation logic based on customer value, behavior, and subscription status.\n\n2. Customers change\n- Use current purchase frequency, spend, and subscription status to detect whether the customer may be improving, stable, or at risk.\n- Recommend whether this segment should be updated over time.\n\n3. Competitors react\n- Assume competitors are actively offering discounts, bundles, and aggressive promotions in the fitness market.\n- Adjust the recommendation so FlexFit remains competitive without always giving the deepest discount.\n\n4. Resources are limited\n- Prioritize campaigns based on expected ROI.\n- Higher-value and higher-risk customers should get higher priority.\n- Avoid expensive campaigns for low-value customers unless churn risk is high.\n\nHere is the customer record:\n{{ JSON.stringify($json) }}\n\nPrevious campaign decision history:\n{{ JSON.stringify($json.feedback_context) }}\n\nAdjust strategy using these rules:\n- If previous_decision_status exists, use it as historical planning context.\n- If a similar recommended action was used recently, vary the new recommendation instead of repeating it exactly.\n- If previous_campaign_priority was High Priority, keep the strategy strong only if the customer still appears valuable or at risk.\n- If no historical decision exists, proceed with the normal customer analysis.\n\nApply this logic:\n\nA. Segment\n- High Value: Total_Spend > 250\n- Medium Value: Total_Spend between 100 and 250\n- Low Value: Total_Spend < 100\n\nB. Churn Risk\n- High Risk: Subscription_Status = \"Inactive\" AND Purchase_Frequency <= 2\n- Medium Risk: Subscription_Status = \"Inactive\" AND Purchase_Frequency > 2\n- Low Risk: Subscription_Status = \"Active\"\n\nC. Customer Change Status\n- Improving: Purchase_Frequency >= 4\n- Stable: Purchase_Frequency = 2 or 3\n- Declining: Purchase_Frequency <= 1 OR Subscription_Status = \"Inactive\"\n\nD. Competitor-aware recommendation\n- For High Value customers: prefer loyalty rewards, premium bundles, VIP retention offers\n- For Medium Value customers: prefer upsell bundles, subscription conversion offers, moderate discounts\n- For Low Value customers: prefer low-cost re-engagement offers, email nudges, limited discounts\n- If churn risk is high, include a retention-focused action\n- If customer is high value, avoid unnecessary deep discounts\n\nE. Priority Score for limited resources\nAssign a Priority_Score from 1 to 10 using this guidance:\n- High Value + High Risk = 9–10\n- High Value + Low Risk = 7–8\n- Medium Value + High Risk = 7–8\n- Medium Value + Medium/Low Risk = 5–6\n- Low Value + High Risk = 4–5\n- Low Value + Low Risk = 1–3\n\nF. Campaign Priority\n- High Priority: score 8–10\n- Medium Priority: score 5–7\n- Low Priority: score 1–4\n\nG. Customer-facing campaign content\nGenerate customer-ready email content based on the recommendation.\n\nRules:\n- Recommended_Action should remain an internal strategic recommendation for the marketing team.\n- Customer_Offer_Message must be customer-facing and ready to place inside an email.\n- Customer_Offer_Message should describe the offer in a natural, persuasive, and friendly way.\n- Do not use internal language such as \"follow-up email campaign\", \"retention strategy\", \"conversion action\", \"churn risk\", or \"competitor response\".\n- Do not mention internal scores or segmentation.\n- Email_Subject must be concise and appealing.\n- Call_To_Action must be short and action-oriented.\n\nExamples:\n- Internal Recommended_Action: \"Send a subscription conversion offer with a bundled product incentive.\"\n- Customer_Offer_Message: \"Enjoy 10% off your first 3 months of subscription plus a free personalized workout plan to help you stay on track.\"\n\nReturn ONLY valid raw JSON with these fields.\nDo not include markdown.\nDo not include code fences.\nDo not include any explanation before or after the JSON.\nEnsure Priority_Score is a number, not a string.\nEnsure every field is present in every response.\n\n{\n  \"Customer_ID\": \"string\",\n  \"Segment\": \"string\",\n  \"Churn_Risk\": \"string\",\n  \"Customer_Trend\": \"string\",\n  \"Competitor_Response_Strategy\": \"string\",\n  \"Recommended_Action\": \"string\",\n  \"Customer_Offer_Message\": \"string\",\n  \"Email_Subject\": \"string\",\n  \"Call_To_Action\": \"string\",\n  \"Priority_Score\": number,\n  \"Campaign_Priority\": \"string\"\n}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        640,
+        112
+      ],
+      "id": "bc3cadd1-ae94-4c74-9740-a117b3ccca53",
+      "name": "AI Agent",
+      "notes": "Makes intelligent marketing decisions\n\nSegments customers\nPredicts churn risk\nAdjusts based on:\ncustomer data\npast feedback\ncompetitor assumptions\nOutputs structured JSON"
+    },
+    {
+      "parameters": {
+        "model": "mistral-medium",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        576,
+        288
+      ],
+      "id": "bf8af7a1-123e-4428-87f2-4877bbfe0d5c",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "WluiCIk5I5C1Fpl2",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Customer_ID\": \"string\",\n  \"Segment\": \"string\",\n  \"Churn_Risk\": \"string\",\n  \"Customer_Trend\": \"string\",\n  \"Competitor_Response_Strategy\": \"string\",\n  \"Recommended_Action\": \"string\",\n  \"Customer_Offer_Message\": \"string\",\n  \"Email_Subject\": \"string\",\n  \"Call_To_Action\": \"string\",\n  \"Priority_Score\": 0,\n  \"Campaign_Priority\": \"string\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        304
+      ],
+      "id": "198e51dc-65d5-404f-82c8-997348f04af4",
+      "name": "Structured Output Parser",
+      "notes": "Ensures AI output is clean JSON"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "15821f9b-4a16-4d31-9cbd-2ed6b1525c52",
+              "leftValue": "={{ $json.output.Priority_Score }}",
+              "rightValue": 8,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        976,
+        112
+      ],
+      "id": "ddf54020-7897-4a35-8bbc-ce6fde00cb7f",
+      "name": "Campaign Decision IF Logic",
+      "notes": "Filters high-priority customers (Priority_Score >= 8)\n\nImplements:\nResource constraint principle\nROI-based targeting"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        288,
+        112
+      ],
+      "id": "6452c420-32a4-491b-aeab-508cdc114a80",
+      "name": "Synchronize Customer and Feedback Data"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84",
+          "mode": "list",
+          "cachedResultName": "FlexFit_Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 690711904,
+          "mode": "list",
+          "cachedResultName": "Campaign_Decision_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84/edit#gid=690711904"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Customer_ID": "={{ $json.output.Customer_ID }}",
+            "Campaign_Priority": "={{ $json.output.Campaign_Priority }}",
+            "Recommended_Action": "={{ $json.output.Recommended_Action }}",
+            "Decision_Time": "={{ $now }}",
+            "Decision_Status": "Planned by AI",
+            "Notes": "Logged by AI workflow before campaign execution"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Customer_ID",
+              "displayName": "Customer_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Campaign_Priority",
+              "displayName": "Campaign_Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommended_Action",
+              "displayName": "Recommended_Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Decision_Time",
+              "displayName": "Decision_Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Decision_Status",
+              "displayName": "Decision_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        960,
+        -32
+      ],
+      "id": "8e44b071-2f99-404d-b841-461fcf5eff59",
+      "name": "Log Campaign Decision",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FKGySgzZTVnmknN4",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Stores campaign execution data (Campaign_Feedback)\n\nLogs:\nCustomer_ID\nCampaign_Priority\nRecommended_Action\nEmail_Sent = Yes\nResponse_Status = Pending\nTimestamp"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84",
+          "mode": "list",
+          "cachedResultName": "FlexFit_Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 690711904,
+          "mode": "list",
+          "cachedResultName": "Campaign_Feedback",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84/edit#gid=690711904"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        -16
+      ],
+      "id": "06bb9798-6e67-4b52-9c4e-3acd8cfb12ba",
+      "name": "Load Campaign Decision History",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FKGySgzZTVnmknN4",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Loads historical campaign performance\n\nProvides:\nPrevious emails sent\nResponse status (Opened, Clicked, Converted)\nCampaign priority used before"
+    },
+    {
+      "parameters": {
+        "jsCode": "const customerItems = $items(\"Load Customer Data (Customer_Master)\", 0);\nconst historyItems = $items(\"Load Campaign Decision History\", 0);\n\nconst historyMap = new Map();\n\nfor (const item of historyItems) {\n  const row = item.json;\n  const customerId = row.Customer_ID;\n  if (!customerId) continue;\n\n  if (!historyMap.has(customerId)) {\n    historyMap.set(customerId, []);\n  }\n\n  historyMap.get(customerId).push(row);\n}\n\nfunction toTimestamp(value) {\n  if (!value) return 0;\n  const t = new Date(value).getTime();\n  return Number.isNaN(t) ? 0 : t;\n}\n\nfunction getLatestRecord(records) {\n  if (!records || records.length === 0) return null;\n\n  return records\n    .slice()\n    .sort((a, b) => {\n      const aTime = toTimestamp(a.Decision_Time);\n      const bTime = toTimestamp(b.Decision_Time);\n      return bTime - aTime;\n    })[0];\n}\n\nreturn customerItems.map((item) => {\n  const customer = item.json;\n  const customerId = customer.Customer_ID;\n  const historyRecords = historyMap.get(customerId) || [];\n  const latest = getLatestRecord(historyRecords);\n\n  return {\n    json: {\n      ...customer,\n      feedback_context: latest\n        ? {\n            has_feedback: true,\n            previous_campaign_priority: latest.Campaign_Priority || null,\n            previous_recommended_action: latest.Recommended_Action || null,\n            previous_decision_time: latest.Decision_Time || null,\n            previous_decision_status: latest.Decision_Status || null,\n            previous_notes: latest.Notes || null,\n            feedback_count: historyRecords.length,\n          }\n        : {\n            has_feedback: false,\n            previous_campaign_priority: null,\n            previous_recommended_action: null,\n            previous_decision_time: null,\n            previous_decision_status: null,\n            previous_notes: null,\n            feedback_count: 0,\n          },\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        112
+      ],
+      "id": "3f8dbf23-1209-4671-b1e2-312ad12eb834",
+      "name": "Add Historical Decision Context to Customer Data",
+      "notes": "Merges customer data + feedback data\n\nMatches Customer_ID\nAttaches latest feedback to each customer\nCreates feedback context and passes it to the LLM"
+    },
+    {
+      "parameters": {
+        "sendTo": "firsttestotu@gmail.com",
+        "subject": "={{ $json.output.Email_Subject }}",
+        "message": "=<h2 style=\"color:#2E86C1;\">💪 A Special FlexFit Offer Just for You</h2>\n\n<p>Hi there,</p>\n\n<p>At <strong>FlexFit</strong>, we’re always looking for ways to help you stay consistent and reach your fitness goals.</p>\n\n<p>We’ve selected a special offer tailored just for you:</p>\n\n<p style=\"background:#F4F6F7; padding:10px; border-radius:5px;\">\n<strong>{{ $json.output.Customer_Offer_Message }}</strong>\n</p>\n\n<p>This is a limited-time opportunity designed to give you more value and help you stay on track.</p>\n\n<br>\n\n<p style=\"text-align:center;\">\n<a href=\"https://your-offer-link.com\" \n   style=\"background-color:#2E86C1; color:white; padding:12px 20px; text-decoration:none; border-radius:5px;\">\n   {{ $json.output.Call_To_Action }}\n</a>\n</p>\n\n<br>\n\n<p>If you have any questions, we’re here to support you.</p>\n\n<p>Stay strong,<br>\n<strong>The FlexFit Team</strong></p>\n\n<hr>\n\n<p style=\"font-size:12px; color:gray;\">\nYou’re receiving this email as part of your FlexFit experience. Offers may vary based on eligibility.\n</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1232,
+        96
+      ],
+      "id": "af1836ee-dc9b-4922-a7a7-9185d01286f5",
+      "name": "Send Campaign Email to High Priority Customers",
+      "webhookId": "7e0df897-ace6-48f9-9365-00c4ac7703ae",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "y9x8gnOCjosHdmZz",
+          "name": "Gmail account 2"
+        }
+      },
+      "notes": "Executes marketing action\n\nSends personalized email\nUses AI-generated recommendation"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84",
+          "mode": "list",
+          "cachedResultName": "FlexFit_Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1096072091,
+          "mode": "list",
+          "cachedResultName": "Customer_Insights",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_OhPPiqTFN1mFR3U9PiFoZ7cWoliVcmDf0BnLiOkd84/edit#gid=1096072091"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Customer_ID": "={{ $json.output.Customer_ID }}",
+            "Segment": "={{ $json.output.Segment }}",
+            "Churn_Risk": "={{ $json.output.Churn_Risk }}",
+            "Customer_Trend": "={{ $json.output.Customer_Trend }}",
+            "Competitor_Response_Strategy": "={{ $json.output.Competitor_Response_Strategy }}",
+            "Recommended_Action": "={{ $json.output.Recommended_Action }}",
+            "Priority_Score": "={{ $json.output.Priority_Score }}",
+            "Campaign_Priority": "={{ $json.output.Campaign_Priority }}",
+            "Email_Subject": "={{ $json.output.Email_Subject }}",
+            "Customer_Offer_Message": "={{ $json.output.Customer_Offer_Message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Customer_ID",
+              "displayName": "Customer_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Segment",
+              "displayName": "Segment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Churn_Risk",
+              "displayName": "Churn_Risk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer_Trend",
+              "displayName": "Customer_Trend",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Competitor_Response_Strategy",
+              "displayName": "Competitor_Response_Strategy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommended_Action",
+              "displayName": "Recommended_Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority_Score",
+              "displayName": "Priority_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Campaign_Priority",
+              "displayName": "Campaign_Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email_Subject",
+              "displayName": "Email_Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer_Offer_Message",
+              "displayName": "Customer_Offer_Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        992,
+        288
+      ],
+      "id": "c43b7d1f-ec6c-4d23-a573-541de509b215",
+      "name": "Store Customer Insights",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FKGySgzZTVnmknN4",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Stores AI decisions\n\nSaves:\nSegment\nChurn risk\nRecommended action\nPriority score"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start Workflow (Manual Trigger)": {
+      "main": [
+        [
+          {
+            "node": "Load Customer Data (Customer_Master)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Campaign Decision History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Customer Data (Customer_Master)": {
+      "main": [
+        [
+          {
+            "node": "Synchronize Customer and Feedback Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Campaign Decision IF Logic",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Campaign Decision",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Store Customer Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Campaign Decision IF Logic": {
+      "main": [
+        [
+          {
+            "node": "Send Campaign Email to High Priority Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Synchronize Customer and Feedback Data": {
+      "main": [
+        [
+          {
+            "node": "Add Historical Decision Context to Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Campaign Decision History": {
+      "main": [
+        [
+          {
+            "node": "Synchronize Customer and Feedback Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Historical Decision Context to Customer Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8225a68d-dc74-4638-b600-58c2a7f11155",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "79a59edf14dadae794ecad8df3d87590a7d3706d42c27e0ab91f0b02eb7b6045"
+  },
+  "id": "TXZ1GfoyruoICKMY",
+  "tags": [
+    {
+      "updatedAt": "2026-04-14T20:56:52.964Z",
+      "createdAt": "2026-04-14T20:56:52.964Z",
+      "id": "U0zzwZuk9sAzDDFc",
+      "name": "school_project"
+    }
+  ]
+}
